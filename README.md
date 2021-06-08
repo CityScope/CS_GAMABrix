@@ -58,7 +58,7 @@ While `brix` can handle multiple tables at the same time by creating multiple th
 ## The CityIO global
 
 To connect your world to a table you need to declare the table name inside your `global` and set the geometry of your world based on this table. For example, we named our table `dungeonmaster`:
-```
+```java
 string city_io_table<-"dungeonmaster";
 geometry shape <- envelope(setup_cityio_world());
 ```
