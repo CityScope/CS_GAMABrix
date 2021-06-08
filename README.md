@@ -24,7 +24,7 @@ What are the types of indicators you can build? Indicators can be anything that 
 # Setup
 
 To setup GAMABrix copy the file `GAMABrix.gaml` into your model directory and import it into your model. You can download `GAMABrix.gaml` from [here](https://github.com/CityScope/CS_Simulation_GAMA/blob/master/CS_CityScope_GAMA/models/cityIO/models/GAMABrix.gaml) Right after declaring your model, import the necessary species and functions by running:
-```
+```java
 import "GAMABrix.gaml"
 ```
 
@@ -68,7 +68,7 @@ While you are building your model, we recommend turning off `GAMABrix` to speed 
 For early stages of model building, you might also want to set `pull_only<-true`. This will tell turn off most of the functionality of the module and just make sure you are updating the local grid by pulling from your table. The simulation will not enter idle mode and the day will never reset. 
 
 Once you are done and want to deploy, change:
-```
+```java
 bool post_on<-true;
 ```
 
@@ -113,7 +113,7 @@ Now, we'll turn some agents into observers that will report information to `city
 
 When creating a numeric indicator you need to write a `reflex` for your agent that updates either `numeric_values` or `heatmap_values`. These two variables should be `map<string,float>`. Here is a simple example that `numeric_values` with the number of blocks.
 
-```
+```java
 reflex update_numeric {
 	numeric_values<-[];
 	numeric_values<+"Number of blocks"::length(brix);
@@ -121,7 +121,7 @@ reflex update_numeric {
 ```
 
 Similarly, here is another example that updates `heatmap_values` with two layers, `heat` and `map` defined as random numbers:
-```
+```java
 reflex update_heatmap {
 	heatmap_values<-[];
 	heatmap_values<+ "heat"::rnd(10);
@@ -130,14 +130,14 @@ reflex update_heatmap {
 ```
 
 For an agent indicator there is no value to be updated, as the indicator just reports its location. However, if your agent does not move, you will get a very boring dot so you might want to update the location. Here is a simple `reflex` that updates the location:
-```
+```java
 reflex move{
 	do wander;
 }
 ```
 
 Additionally, `GAMABrix` provides a shortcut to create numeric indicators that do not require you to define a subspecies. This is meant for straightforward indicators that can be calculated in one line of code. To create a simple numeric indicator, just create and agent of the `cityio_numeric_indicator` species and pass your function as a string to `indicator_value`. For example, a numeric indicator that returns the average height of blocks:
-```
+```java
 create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
 ```
 
@@ -148,19 +148,19 @@ Let's say you finished writing your model and are ready to leave it running fore
 We highly recommend using a docker container to run headless GAMA on a server. This will take care of compatibility issues between platforms. 
 
 First, pull the image from dockerhub. This step only needs to be performed once per server. We will be using [this image](https://hub.docker.com/r/gamaplatform/gama).
-```
+```java
 > docker pull gamaplatform/gama
 ```
 
 Second, we will build the `xml` file with the model meta parameters. You will only need to do this once for each model. Ensure you model directory (the folder that contains models, results, etc) contains a `headless` folder, and then run the following command adding the name of your gama file (`model_file.gaml`) where needed:
-```
+```java
 > docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama -xml CityScopeHeadless my_model/models/[model_file.gaml] my_model/headless/myHeadlessModel.xml
 ```
 
 This creates a file called `myHeadlessModel.xml` in your `headless` folder. If you know how to edit this file, feel free to modify it now. For more information about this file, check the [documentation](https://gama-platform.github.io/wiki/Headless). Please note that by default the simulation will only run 1000 steps. If you wish to change this, edit the `xml` and change the `finalStep` property to a higher number or just delete if you wish the model to run continuosly.
 
 Finally, we will run this model inside a container. This final step is what you will repeat everytime you modify your model. Run the following command, again from your model director:
-```
+```java
 > docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama my_model/headless/myHeadlessModel.xml my_model/results/
 ```
 
@@ -177,7 +177,7 @@ You need to define four things:
 * Set the `viz_type` to either `bar` or `radar` (defaults to `bar` if you don't change it).
 
 Here's a simple example:
-```
+```java
 species my_numeric_indicator parent: cityio_agent {
 	bool is_numeric<-true;
 	string viz_type <- "bar";
@@ -191,12 +191,12 @@ species my_numeric_indicator parent: cityio_agent {
 ```
 
 Don't forget to create an agent of this species in the `global` `init`.
-```
+```java
 create my_numeric_indicator;
 ```
 
 For simple indicators, you can rely on creating an agent of the `cityio_numeric_indicator` species in your `global` `init`. Here's an example:
-```
+```java
 create cityio_numeric_indicator with: (viz_type:"bar", indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
 ```
 
@@ -209,7 +209,7 @@ You need to define three things:
 * Define a reflex that updates the `heatmap_values` map (`map<string,float>`).
 * Define an `indicator_name` either in the species definition or in the create statement.
 
-```
+```java
 species thermometer parent: cityio_agent {
 	bool is_heatmap<-true;
 	string indicator_name<-"thermometer";
@@ -230,7 +230,7 @@ You need to is_visible two things:
 * Set `is_heatmap` to `true`.
 * Define a reflex that updates the agent's location. 
 
-```
+```java
 species people parent: cityio_agent skills:[moving]{ 
 	bool is_visible<-true;
 	
@@ -244,7 +244,7 @@ Additionally, you can define the integers `profile` and `mode` that will control
 
 ## Full module example (with comments)
 
-```
+```java
 model citIOGAMA
 
 // Import GAMABrix (this needs to be in the same directory as your model)
