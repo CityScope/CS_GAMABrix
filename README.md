@@ -88,6 +88,33 @@ When you import `GAMABrix` you will also see an additional experiment called `Ci
 
 By default, `GAMABrix` will run its init (which creates the grid) right after your model's init. This means that you will not have access to any `brix` object inside your init. You can always change this behavior by forcing `GAMABrix` to run its init earlyer by adding `do brix_init` where needed. 
 
+Here's an example of bare minimum model that will allow you to clone the table locally and start defining your agents:
+
+```java
+model example
+
+import "GAMABrix.gaml"
+
+global {
+	string city_io_table<-"cityscopejs_gama";  
+    geometry shape <- envelope(setup_cityio_world());
+	bool listen  <- false;
+	bool post_on <- false;
+	
+	init {
+
+	}
+}
+
+experiment CityScope type: gui autorun: false{
+	output {
+		display map_mode type:opengl background:#black{	
+			species brix aspect:base;
+		}
+	}
+}
+
+```
 
 ## Let's talk input
 
