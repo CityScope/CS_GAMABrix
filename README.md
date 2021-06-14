@@ -65,7 +65,7 @@ geometry shape <- envelope(setup_cityio_world());
 
 While you are building your model, we recommend turning off `GAMABrix` to speed up the process (the default). By setting `post_on<-false`, the model will only update your local grid without posting any of the indicators to cityio. In other words, you will only be *getting* from `cityIO` not *posting*. This will reduce your bandwidth usage and allow you to debug your model faster. By doing this, the model will still keep track of the day and enter idle mode once the day is over. 
 
-For early stages of model building, you might also want to set `pull_only<-true`. This will tell turn off most of the functionality of the module and just make sure you are updating the local grid by pulling from your table. The simulation will not enter idle mode and the day will never reset. 
+For early stages of model building, you might also want to set `listen<-false`. This will tell turn off most of the functionality of the module and just make sure you are updating the local grid by pulling from your table. The simulation will not enter idle mode and the day will never reset. 
 
 Once you are done and want to deploy, change:
 ```java
@@ -82,7 +82,7 @@ Additionally, the following variables can be defined in the `global` and allow f
 * `saveLocationInterval`: Float, frequency in second by which to save locally the location of agents. This is not the post frequency. Optional and defaults to `10` steps.	
 * `totalTimeInSec`: Integer, total time in seconds that the simulation will run for. Defaults to a whole day. Please note that `CityIO` will not render more than 1 day of simulation.
 * `idle_update_frequency`: Float, time in real world seconds (not simulation seconds) between two get requests to check hash when in idle mode. 
-* `pull_only`: Boolean, used to use GAMABrix only to update the local grid. This is very useful for the early stages of model building.
+* `listen`: Boolean, used to use GAMABrix to update the indicators in CityIO. For the early stages of model building, set `listen<-false` (the default).
 
 When you import `GAMABrix` you will also see an additional experiment called `CityScopeHeadless`. This experiment is used to run your model as a headless process in a server.
 
