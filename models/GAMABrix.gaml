@@ -16,6 +16,8 @@ global {
 	float step <- 60 #sec;
 	float saveLocationInterval<-10*step; // In seconds
 	
+	bool three_D_viz <- true; 
+	
 	bool listen <- false; // If false, the model will only pull the grid and not handle any of the posting or time of day controlling
 	
 	int totalTimeInSec<-86400; //24hx60minx60sec 1step is 10#sec
@@ -414,7 +416,12 @@ species brix{
 	map<string, float> block_naics;
 	
 	aspect base {
-		  draw shape color:color border:color-50 depth:height;	
+		if three_D_viz {
+			draw shape color:color border:color-50 depth:height;			
+		} else {
+			draw shape color:color border:color-50;
+		}
+		  
 	}
 	
 }
@@ -459,7 +466,12 @@ species cityio_agent parent: cityio_indicator {
 	}
 	
 	aspect base {
-		draw circle(10) color:#blue;
+		if three_D_viz {
+			draw sphere(10) color:#blue;	
+		} else {
+			draw circle(10) color:#blue;
+		}
+		
 	}
 }
 
