@@ -17,7 +17,7 @@ global {
 	bool post_on <- false;
 	
 	init {
-
+		do brix_init;
 	}
 }
 
