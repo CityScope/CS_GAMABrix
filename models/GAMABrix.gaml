@@ -13,6 +13,10 @@ global {
 	int cycle_first_batch<-100; // Cycle in which to send the first batch of data
 	bool send_first_batch<-true;
 	
+	bool quietly <- true;
+	
+//	date starting_date <- date("2019-09-01-00-00-00");
+	
 	float step <- 60 #sec;
 	float saveLocationInterval<-10*step; // In seconds
 	
@@ -94,8 +98,9 @@ global {
 		brix_init_tracker <- true;
 		do initialize_brix;
 		do setup_static_type;
-		do udpateGrid;
+		do updateGrid;
 		do sendIndicators;
+		grid_hash_id <- get_grid_hash();
 	}
 	
 	action initialize_brix {
@@ -123,14 +128,18 @@ global {
     }
 	
 	string get_grid_hash {
-		write "Checking hash";
+		if (not quietly) {
+			write "Checking hash";
+		}
 		file grid_hashes <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/meta/hashes");
 		string grid_hash <- first(grid_hashes at hash_id);
 		return grid_hash;
 	
 	}
-	action udpateGrid {
-	    write "Performing local grid update";
+	action updateGrid {
+		if (not quietly) {
+	    	write "Performing local grid update";
+	    }
 		file geogrid_data <- json_file("https://cityio.media.mit.edu/api/table/"+city_io_table+"/GEOGRIDDATA");
 		loop b over: geogrid_data {
 			loop l over: list(b) {
@@ -157,9 +166,13 @@ global {
 			}catch{
 			  write #current_error + " Impossible to write to cityIO - Connection to Internet lost or cityIO is offline";	
 			}
-			write #now + " " + type + " sucessfully sent to cityIO at iteration:" + cycle ;
+			if (not quietly) {
+				write #now + " " + type + " sucessfully sent to cityIO at iteration:" + cycle ;
+			}
 	    }else{
-	    	write #now + " " + type + " would have been sent to cityIO at iteration:" + cycle ;
+	    	if (not quietly) {
+	    		write #now + " " + type + " would have been sent to cityIO at iteration:" + cycle ;
+	    	}
 	    }
 		
 	}
@@ -305,10 +318,14 @@ global {
 		string new_grid_hash_id <- get_grid_hash();
 		if ((new_grid_hash_id != grid_hash_id))  {
 			grid_hash_id <- new_grid_hash_id;
-			do udpateGrid;
+			do updateGrid;
+			do reInit;
 		}
 	}
 	
+	action reInit {
+		
+	}
 	
 	reflex update when: ((cycle mod update_frequency = 0) and (listen)) {
 		string new_grid_hash_id <- get_grid_hash();
@@ -316,7 +333,8 @@ global {
 		if ((new_grid_hash_id != grid_hash_id))  {
 			grid_hash_id <- new_grid_hash_id;
 			do restart_day;
-			do udpateGrid;
+			do updateGrid;
+			do reInit;
 		}
 		if ((cycle_of_day()>cycle_first_batch) and !first_batch_sent) {
 			first_batch_sent<-true;
@@ -326,7 +344,9 @@ global {
 		}
 		
 		if (time_of_day()=-1){
-			write "ENTERING IDLE MODE";
+			if (not quietly) {
+				write "ENTERING IDLE MODE";
+			}
 			idle_mode<-true;
 			if (post_on) {
 				do sendIndicators;
@@ -343,8 +363,10 @@ global {
 				}
 			}
 			do resume;
-		}	
-		write "TIME OF DAY:"+time_of_day();
+		}
+		if (not quietly) {
+			write "TIME OF DAY:"+time_of_day();
+		}
 		
 	}
 	
