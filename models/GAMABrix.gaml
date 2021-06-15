@@ -14,6 +14,7 @@ global {
 	bool send_first_batch<-true;
 	
 	bool quietly <- true;
+	bool verbose <- false;
 	
 //	date starting_date <- date("2019-09-01-00-00-00");
 	
@@ -157,6 +158,10 @@ global {
 	}
 	
 	action sendStringToCityIo(string cityIOString, string type){
+		if verbose {
+			write "Sending data:";
+			write cityIOString;
+		}
 		save cityIOString to: "./../results/"+type+".json" rewrite: true;
 		file JsonFileResults <- json_file("./../results/"+type+".json");
 	    map<string, unknown> m <- JsonFileResults.contents;
@@ -244,6 +249,9 @@ global {
 		do sendStringToCityIo(heatmap_indicator_string,"access");
 		//ABM Indicator
 		list<agent> agent_indicators <- get_all_instances(cityio_agent);
+		if (not quietly) {
+			write "Agent indicators found: "+length(agent_indicators);
+		}
 		string abm_indicator_string <- "{";
 		abm_indicator_string <- abm_indicator_string+"\"attr\": {";
 		abm_indicator_string <- abm_indicator_string+"\"mode\": {\"0\": {\"name\": \"home\", \"color\": \"#4daf4a\"}, \"1\": {\"name\": \"work\", \"color\": \"#ffff33\"}}";
@@ -344,9 +352,7 @@ global {
 		}
 		
 		if (time_of_day()=-1){
-			if (not quietly) {
-				write "ENTERING IDLE MODE";
-			}
+			write "ENTERING IDLE MODE AT CYCLE: " + cycle;
 			idle_mode<-true;
 			if (post_on) {
 				do sendIndicators;
@@ -358,6 +364,7 @@ global {
 					string new_grid_hash_id <- get_grid_hash();
 					if ((new_grid_hash_id != grid_hash_id))  {
 						idle_mode<-false;
+						write "LEAVING IDLE MODE AT CYCLE: " + cycle;
 					}
 					idle_step_start<-machine_time/1000;
 				}
