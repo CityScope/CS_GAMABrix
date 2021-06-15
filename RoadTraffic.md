@@ -4,7 +4,7 @@ This tutorial will follow the famous [Road Traffic](https://gama-platform.github
 
 First, create a table [here](https://cityscope.media.mit.edu/CS_cityscopeJS/) or choose an existing table. Take note of your table name. For this tutorial, make sure that your table has the types `Residential` and `Industrial` to simulate agents commuting from work to home and viceversa.
 
-## Loading a table
+## Step 1: Loading a table
 
 Once your table has been created, go ahead and connect your GAMA world to your table.
 
@@ -52,7 +52,7 @@ experiment CityScope type: gui autorun: false{
 }
 ```
 
-## People Agents
+## Step 1: People Agents
 
 This second step, creates a series of `people` agents and assigns them to a random location in a `Residential` `brix` cell. This is why it was important that your table had `Residential` cells defined. 
 
@@ -132,9 +132,7 @@ experiment CityScope type: gui autorun:false{
 }
 ```
 
-
-
-## People Agents
+## Step 3: Movement of people
 
 The third step is to let the people move. Ideally, you would complement the table data with a shapefile with the road network. For now, we will assume that `people` agents can move freely on the grid. 
 
@@ -348,6 +346,122 @@ experiment CityScope type: gui autorun:false{
 
 ```
 
+## Step 4: Sending data to CityIO
+
+In this section we will deviate from the original Road Traffic model, which goes much deeper into simulating road congestion. We will illustrate how to send the information from the agents to CityIO.
+
+The first step, is to set `listen <- true;`. Listen mode is a bit different from the simulation you've been working with so far. When in listen mode, the simulation will run for one full day and post all that information to CityIO. The model will then remain idle until a grid update happens. Think about listen mode as recording a movie and sending it to someone else.
+
+Which agents to record? To flag the agents that will be recorded, we modify the `species` definition to make it a `subspecies` of the `cityio_agent` species. By doing this, `GAMABrix` will interpret that these agents need to be tracked because they contain important information that needs to be posted to the table. To post their location, set `bool is_visible<-true;`:
+
+```java
+species people parent: cityio_agent skills:[moving] {
+	bool is_visible<-true;
+	...
+}
+```
+
+With these simple modifications, the final model becomes:
+
+```java
+model example
+
+import "GAMABrix.gaml"
+
+global {
+	string city_io_table<-"cityscopejs_gama";  
+	geometry shape <- envelope(setup_cityio_world());
+	bool listen  <- true;
+	bool post_on <- true;
+	
+	int nb_people <- 100;
+	date starting_date <- date("2019-09-01-00-00-00");
+	int min_work_start <- 6;
+	int max_work_start <- 8;
+	int min_work_end <- 16; 
+	int max_work_end <- 20; 
+	float min_speed <- 1.0 #km / #h;
+	float max_speed <- 5.0 #km / #h; 
+	
+	init {
+		do brix_init;
+		
+		list<brix> residential_cells <- brix where (each.type="Residential");
+		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+    	create people number: nb_people {
+			speed <- rnd(min_speed, max_speed);
+			start_work <- rnd (min_work_start, max_work_start);
+			end_work <- rnd(min_work_end, max_work_end);
+			living_place  <- one_of(residential_cells) ;
+			working_place <- one_of(industrial_cells) ;
+			objective <- "resting";
+			location <- any_location_in (living_place); 
+		}
+	}
+
+	
+	action reInit {
+		list<brix> residential_cells <- brix where  (each.type="Residential");
+		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		ask people {
+			if (not (residential_cells contains self.living_place)) {
+				self.living_place  <- one_of(residential_cells) ;
+			}
+			if (not (industrial_cells  contains self.working_place)) {
+				self.working_place <- one_of(industrial_cells) ;
+			}
+		}
+	}
+}
+
+species people parent: cityio_agent skills:[moving] {
+	rgb color <- #green ;
+	brix living_place <- nil ;
+	brix working_place <- nil ;
+	int start_work ;
+	int end_work  ;
+	string objective ; 
+	point the_target <- nil ;
+	
+	bool is_visible<-true;
+	    
+	reflex time_to_work when: current_date.hour = start_work and objective = "resting"{
+		objective <- "working" ;
+		the_target <- any_location_in (working_place);
+	}
+	    
+	reflex time_to_go_home when: current_date.hour = end_work and objective = "working"{
+		objective <- "resting" ;
+		the_target <- any_location_in (living_place); 
+	} 
+	 
+	reflex move when: the_target != nil {
+		do goto target: the_target; 
+		if the_target = location {
+			the_target <- nil ;
+		}
+	}
+	
+	aspect base {
+		draw sphere(10) color: color border: color;
+	}
+}
+
+experiment CityScope type: gui autorun:false{
+	parameter "Number of people agents" var: nb_people category: "People" ;
+
+	output {
+		display map_mode type:opengl background:#black{
+			species brix aspect: base transparency: 0.5;
+			species people aspect: base;	
+		}
+	}
+}
+```
+
+## Step 5: Creating observers
+
+For most use cases, users will want to post summary statistics about the table or about the agents to cityIO to be displayed in the front end. These indicators can be displayed as heatmaps, as part of a bar chart or as variables in the radar plot. In order to build these `indicators`, we need to build agents that will act as `observers` by reporting information to `cityIO`. Here, we will report the total commuting distance that all agents follows from home to work and back. We will display this information as a bar in the bar chart.
 
 
 
@@ -355,6 +469,9 @@ experiment CityScope type: gui autorun:false{
 
 
 
+## Step 6: Headless mode
+
+The final step in deploying a GAMA model to CityScope is to run it in a headless mode. This section will describe the steps needed to accomplish this. 
 
 
 
