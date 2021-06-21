@@ -187,19 +187,20 @@ global {
 		list<agent> numeric_indicators <- get_all_instances(cityio_agent);
 		string numerical_indicator_string<-"[";
 		ask numeric_indicators as: cityio_agent {
-			if is_numeric {
+			if (is_numeric or indicator_type='numeric') {
 				string myIndicator;
 				loop k over: numeric_values.keys {
 					myIndicator<-"{\"indicator_type\":\"" + indicator_type+"\",\"name\":\""+k+"\",\"value\":"+numeric_values[k]+",\"viz_type\":\"" + viz_type + "\"}";
-				}
-				if length(numerical_indicator_string)=1 {
-					numerical_indicator_string <- numerical_indicator_string+myIndicator;				
-				}else{
-					numerical_indicator_string <- numerical_indicator_string+","+myIndicator;
+					if length(numerical_indicator_string)=1 {
+						numerical_indicator_string <- numerical_indicator_string+myIndicator;				
+					}else{
+						numerical_indicator_string <- numerical_indicator_string+","+myIndicator;
+					}
 				}
 			}
 		}
 		numerical_indicator_string <- numerical_indicator_string+"]";
+		write numerical_indicator_string;
 		do sendStringToCityIo(numerical_indicator_string,"indicators");
 		//Heatmap Indicator
 		list<agent> heatmap_indicators <- get_all_instances(cityio_agent);
