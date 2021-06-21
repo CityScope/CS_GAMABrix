@@ -23,18 +23,18 @@ global {
 		do brix_init;
 		
 		residential_cells <- brix where (each.type="Residential");
-    	create people number: nb_people {
-        	location <- any_location_in (one_of (residential_cells));
-    	}
+		create people number: nb_people {
+			location <- any_location_in (one_of (residential_cells));
+		}
 	}
 }
 
 species people {
-    rgb color <- #green ;
-    
-    aspect base {
-    	draw sphere(10) color: color border: color;
-    }
+	rgb color <- #green ;
+
+	aspect base {
+		draw sphere(10) color: color border: color;
+	}
 }
 
 experiment CityScope type: gui autorun:false{

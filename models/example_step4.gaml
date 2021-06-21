@@ -31,7 +31,7 @@ global {
 		
 		residential_cells <- brix where (each.type="Residential");
 		industrial_cells  <- brix where (each.type="Industrial");
-    	create people number: nb_people {
+		create people number: nb_people {
 			speed <- rnd(min_speed, max_speed);
 			start_work <- rnd (min_work_start, max_work_start);
 			end_work <- rnd(min_work_end, max_work_end);
@@ -67,12 +67,12 @@ species people parent: cityio_agent skills:[moving] {
 	point the_target <- nil ;
 	
 	bool is_visible<-true;
-	    
+	
 	reflex time_to_work when: current_date.hour = start_work and objective = "resting"{
 		objective <- "working" ;
 		the_target <- any_location_in (working_place);
 	}
-	    
+	
 	reflex time_to_go_home when: current_date.hour = end_work and objective = "working"{
 		objective <- "resting" ;
 		the_target <- any_location_in (living_place); 
