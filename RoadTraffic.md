@@ -8,7 +8,9 @@ First, create a table [here](https://cityscope.media.mit.edu/CS_cityscopeJS/) or
 
 Once your table has been created, go ahead and connect your GAMA world to your table.
 
-First, import the `GAMABrix` model by adding the following import right before your `global` definition:
+First, clone or fork the [GAMABrix](https://github.com/CityScope/CS_GAMABrix) repo and open the `template.gaml`. We recomend starting from this model.
+
+The first line of the templae imports the `GAMABrix` model by adding the following import right before your `global` definition:
 
 ```java
 import "GAMABrix.gaml"
