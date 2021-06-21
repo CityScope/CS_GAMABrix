@@ -40,7 +40,7 @@ species thermometer parent: cityio_agent {
 		heatmap_values<-[];
 		heatmap_values<+ "heat"::rnd(10);
 		heatmap_values<+ "map"::rnd(10);
-	}	
+	}
 }
 
 species people parent: moving_agent{ 
