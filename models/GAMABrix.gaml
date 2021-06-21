@@ -206,7 +206,7 @@ global {
 		list<agent> heatmap_indicators <- get_all_instances(cityio_agent);
 		list<string> all_keys<-[];
 		ask heatmap_indicators as: cityio_agent{
-			if is_heatmap {
+			if (is_heatmap or indicator_type='heatmap') {
 				loop k over: heatmap_values.keys {
 					all_keys<-remove_duplicates(all_keys+[k]);
 				}
@@ -214,7 +214,7 @@ global {
 		}
 		string heatmap_indicator_string<-"{\"features\":[";
 		ask heatmap_indicators as: cityio_agent{
-			if is_heatmap {
+			if (is_heatmap or indicator_type='heatmap') {
 				string hIndicator<-"{\"geometry\":{\"coordinates\":["+CRS_transform(self).location.x+","+CRS_transform(self).location.y+"],\"type\":\"Point\"},"; // Do we need CRS_transform here?
 				hIndicator<-hIndicator+"\"properties\":[";
 				bool first_key<-true;
@@ -329,6 +329,14 @@ global {
 			grid_hash_id <- new_grid_hash_id;
 			do updateGrid;
 			do reInit;
+			list<agent> all_indicators <- get_all_instances(cityio_agent);
+			ask all_indicators  as: cityio_agent {
+				if re_init {
+					do _init_;
+				}
+				do calculate_numeric;
+				do calculate_heatmap;
+			}
 		}
 	}
 	
@@ -344,6 +352,14 @@ global {
 			do restart_day;
 			do updateGrid;
 			do reInit;
+			list<agent> all_indicators <- get_all_instances(cityio_agent);
+			ask all_indicators  as: cityio_agent {
+				if re_init {
+					do _init_;
+				}
+				do calculate_numeric;
+				do calculate_heatmap;
+			}
 		}
 		if ((cycle_of_day()>cycle_first_batch) and !first_batch_sent) {
 			first_batch_sent<-true;
@@ -467,12 +483,13 @@ species cityio_agent parent: cityio_indicator {
 	bool is_heatmap<-false;
 	bool is_visible<-false;
 	bool is_numeric<-false;
+	bool re_init<-false;
 	
 	string profile<-"0";
 	string mode<-"0";
 	
 	string type;
-	
+		
 	action reset_location {
 		locs<-[];
 	}
@@ -492,6 +509,14 @@ species cityio_agent parent: cityio_indicator {
 	}
 	
 	reflex update_numeric {
+		
+	}
+	
+	action calculate_heatmap {
+		
+	}
+	
+	action calculate_numeric {
 		
 	}
 	
