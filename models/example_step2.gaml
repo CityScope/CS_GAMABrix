@@ -17,11 +17,12 @@ global {
 	bool post_on <- false;
 	
 	int nb_people <- 100;
+	list<brix> residential_cells;
 	
 	init {
 		do brix_init;
 		
-		list<brix> residential_cells <- brix where (each.type="Residential");
+		residential_cells <- brix where (each.type="Residential");
     	create people number: nb_people {
         	location <- any_location_in (one_of (residential_cells));
     	}

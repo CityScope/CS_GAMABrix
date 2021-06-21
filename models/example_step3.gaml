@@ -17,6 +17,8 @@ global {
 	bool post_on <- false;
 	
 	int nb_people <- 100;
+	list<brix> residential_cells;
+	list<brix> industrial_cells;
 	date starting_date <- date("2019-09-01-00-00-00");
 	int min_work_start <- 6;
 	int max_work_start <- 8;
@@ -28,8 +30,8 @@ global {
 	init {
 		do brix_init;
 		
-		list<brix> residential_cells <- brix where (each.type="Residential");
-		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		residential_cells <- brix where (each.type="Residential");
+		industrial_cells  <- brix where (each.type="Industrial");
     	create people number: nb_people {
 			speed <- rnd(min_speed, max_speed);
 			start_work <- rnd (min_work_start, max_work_start);
@@ -42,8 +44,8 @@ global {
 	}
 	
 	action reInit {
-		list<brix> residential_cells <- brix where  (each.type="Residential");
-		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		residential_cells <- brix where  (each.type="Residential");
+		industrial_cells  <- brix where (each.type="Industrial");
 		ask people {
 			if (not (residential_cells contains self.living_place)) {
 				self.living_place  <- one_of(residential_cells) ;

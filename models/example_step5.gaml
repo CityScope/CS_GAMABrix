@@ -16,6 +16,8 @@ global {
 	bool post_on <- true;
 		
 	int nb_people <- 100;
+	list<brix> residential_cells;
+	list<brix> industrial_cells;
 	date starting_date <- date("2019-09-01-00-00-00");
 	int min_work_start <- 6;
 	int max_work_start <- 8;
@@ -23,12 +25,14 @@ global {
 	int max_work_end <- 20; 
 	float min_speed <- 1.0 #km / #h;
 	float max_speed <- 5.0 #km / #h; 
+	float largest_possible_distance;
 	
 	init {
 		do brix_init;
 		
-		list<brix> residential_cells <- brix where (each.type="Residential");
-		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		residential_cells <- brix where (each.type="Residential");
+		industrial_cells  <- brix where (each.type="Industrial");
+		do calculate_normalization;
     	create people number: nb_people {
 			speed <- rnd(min_speed, max_speed);
 			start_work <- rnd (min_work_start, max_work_start);
@@ -40,12 +44,32 @@ global {
 		}
 		
 		create commute_distance;
+		ask brix {
+			if (self.type='Residential') {
+				create work_distance with: (location:self.location);
+			}
+		}
+		ask brix {
+			if (self.type='Industrial') {
+				create home_distance with: (location:self.location);
+			}
+		}
 	}
 
+	action calculate_normalization {
+		list<float> pairwise_distances;
+		ask residential_cells {
+			ask industrial_cells {
+				pairwise_distances <+ distance_to(self,myself);
+			}
+		}
+		largest_possible_distance <- max(pairwise_distances);
+	}
 	
 	action reInit {
-		list<brix> residential_cells <- brix where  (each.type="Residential");
-		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		residential_cells <- brix where (each.type="Residential");
+		industrial_cells  <- brix where (each.type="Industrial");
+		do calculate_normalization;
 		ask people {
 			if (not (residential_cells contains self.living_place)) {
 				self.living_place  <- one_of(residential_cells) ;
@@ -96,23 +120,13 @@ species commute_distance parent: cityio_agent {
 	string indicator_name <- "Commute distance";
 	
 	bool is_numeric<-true;
+	bool re_init<-true;
 	
 	float avg_distance;
 	float largest_distance;	
 	float largest_possible_distance;
-	
-	init {
-		list<float> pairwise_distances;
-		ask brix {
-			ask brix {
-				pairwise_distances <+ distance_to(self,myself);
-			}
-			
-		}
-		largest_possible_distance<-max(pairwise_distances);
-	}
-	
-	reflex update_numeric {
+		
+	action calculate_numeric {
 		list<float> brix_distances <- people collect distance_to(each.living_place,each.working_place);
 		avg_distance     <- mean(brix_distances);
 		largest_distance <- max(brix_distances);
@@ -122,7 +136,29 @@ species commute_distance parent: cityio_agent {
 	}
 }
 
+species work_distance parent: cityio_agent {
+	bool is_heatmap<-true;
+	string indicator_type<-"heatmap";
+	string indicator_name<-"Work distance";
+		
+	action calculate_heatmap {
+		float closest_workplace<- distance_to(closest_to(industrial_cells, self),self);
+		heatmap_values<-[];
+		heatmap_values<+ "closest workplace"::closest_workplace/largest_possible_distance;
+	}
+}
 
+species home_distance parent: cityio_agent {
+	bool is_heatmap<-true;
+	string indicator_type<-"heatmap";
+	string indicator_name<-"Home distance";
+		
+	action calculate_heatmap {
+		float closest_residential<- distance_to(closest_to(residential_cells, self),self);
+		heatmap_values<-[];
+		heatmap_values<+ "closest residential"::closest_residential/largest_possible_distance;
+	}
+}
 
 experiment CityScope type: gui autorun:false{
 	parameter "Number of people agents" var: nb_people category: "People" ;
