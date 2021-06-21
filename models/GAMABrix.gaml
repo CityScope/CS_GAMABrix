@@ -93,6 +93,11 @@ global {
 		if (not brix_init_tracker){
 			do brix_init;
 		}
+		list<agent> all_indicators <- get_all_instances(cityio_agent);
+		ask all_indicators  as: cityio_agent {
+			do calculate_numeric;
+			do calculate_heatmap;
+		}
 	}
 	
 	action brix_init {
@@ -489,12 +494,7 @@ species cityio_agent parent: cityio_indicator {
 	string mode<-"0";
 	
 	string type;
-	
-	init {
-		do calculate_numeric;
-		do calculate_heatmap;
-	}
-		
+			
 	action reset_location {
 		locs<-[];
 	}
