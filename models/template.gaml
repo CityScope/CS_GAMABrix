@@ -1,8 +1,8 @@
 /**
-* Name: example
-* Based on the internal empty template. 
-* Author: cristianjf
-* Tags: 
+* Name: template
+* Template for GAMABrix model that interfaces with a CityScope table.
+* Author: crisjf
+* GitHub: https://github.com/CityScope/CS_GAMABrix
 */
 
 

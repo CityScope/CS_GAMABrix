@@ -1,8 +1,8 @@
 /**
-* Name: examplepeople
-* Based on the internal empty template. 
-* Author: cristianjf
-* Tags: 
+* Name: example
+* Step 5 of RoadTraffic tutorial on a CityScope table.
+* Author: crisjf
+* GitHub: https://github.com/CityScope/CS_GAMABrix
 */
 
 model example
