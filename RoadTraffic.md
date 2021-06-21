@@ -463,13 +463,13 @@ experiment CityScope type: gui autorun:false{
 
 For most use cases, users will want to post summary statistics about the table or about the agents to cityIO to be displayed in the front end. These indicators can be displayed as heatmaps, as part of a bar chart, or as variables in the radar plot. In order to build these `indicators`, we need to build agents that will act as `observers` by reporting information to `cityIO`. 
 
-The simplest `indicator` is a `numeric` indicator that that collects information from the agents and reports a single number to CityIO. To create a `numeric` indicator, you can use the `cityio_numeric_indicator` species already included in `GAMABrix` and create an agent that belongs to this species. The important parameter is `indicator_value` which is a string that will be evaluated by GAMA at every step. 
+The simplest `indicator` is a `numeric` indicator that that collects information from the agents and reports a single number to CityIO. To create a `numeric` indicator, you can use the `cityio_numeric_indicator` species already included in `GAMABrix` and create an agent that belongs to this species. The important parameter is `indicator_value` which is a string that will be evaluated by GAMA at initialization. When in `listen` mode, this function will be evaluted everytime there is a table change. 
 
 ```java
 create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Average commute distance", indicator_value: "mean(people collect distance_to(each.living_place,each.working_place))");
 ```
 
-This syntax works great for simple `numeric` indicators. In some cases, we might want to build a more complex indicator that relies on more complex calculations. For example, we might want to report both the mean and the total commute distance, or we might want to calculate commute distance over a road network and report multiple statistics to describe it. If this is the case, we need to define our own species of `numeric` indicators as a subspecies of the `cityio_agent`. The example below implements the exact same indicator as before, but defining our own species called `cityio_numeric_indicator`:
+This syntax works great for simple `numeric` indicators, but it is a bit restrictive. In some cases, we might want to build a more complex indicator that relies on more complex calculations. For example, we might want to report multiple statistics, or we might want to calculate commute distance over a road network, or we might have a need for an indicator that updates its value via a `reflex` instead of calculating everything at `init`. If this is the case, we need to define our own species of `numeric` indicators as a subspecies of the `cityio_agent`. The example below implements the exact same indicator as before, but defining our own species called `cityio_numeric_indicator`:
 
 ```java
 species commute_distance parent: cityio_agent {
@@ -478,10 +478,9 @@ species commute_distance parent: cityio_agent {
 	string indicator_name <- "Average commute distance";
 	
 	bool is_numeric<-true;
-	
 	float avg_distance;	
 	
-	reflex update_numeric {
+	action calculate_numeric {
 		avg_distance <- mean(people collect distance_to(each.living_place,each.working_place));
 		numeric_values<-[];
 		numeric_values<+indicator_name::avg_distance;
@@ -489,13 +488,74 @@ species commute_distance parent: cityio_agent {
 }
 ```
 
-To make this work, we need to add it to the init:
+The key is to update the `numeric_values` variable. Here, we do it through `calculate_numeric` action. By naming our main action this way, we tell `GAMABrix` that this needs to run every time the table changes. We could define any reflex or set of actions we wanted, as long as they update the `numeric_values` variable.  
+
+To make this work, we need to create this agent in the global `init`:
 
 ```java
 create commute_distance;
 ```
 
-Until now, all examples have returned a single value for the numeric indicator. The example below extends this by creating an indicator that reports both the average commute distance and the total commute distance. The example below also normalizes both values using a normalization factor calculated in the `init` of the species, ensuring the reported indicators are between 0 and 1. This illustrates how defining a subclass gives much more flexibility.
+Until now, all examples have returned a single value for the numeric indicator. The example below extends this by creating an indicator that reports both the average commute distance and the total commute distance. The example below also normalizes both values using a normalization factor calculated in the `global` `init` of the species, ensuring the reported indicators are between 0 and 1. This illustrates how defining a subclass gives much more flexibility.
+
+In the global `init`:
+
+```java
+init {
+	do brix_init;
+	
+	residential_cells <- brix where (each.type="Residential");
+	industrial_cells  <- brix where (each.type="Industrial");
+	do calculate_normalization;
+	create people number: nb_people {
+		speed <- rnd(min_speed, max_speed);
+		start_work <- rnd (min_work_start, max_work_start);
+		end_work <- rnd(min_work_end, max_work_end);
+		living_place  <- one_of(residential_cells) ;
+		working_place <- one_of(industrial_cells) ;
+		objective <- "resting";
+		location <- any_location_in (living_place); 
+	}
+	
+	create commute_distance;
+	ask brix {
+		if (self.type='Residential') {
+			create work_distance with: (location:self.location);
+		}
+	}
+	ask brix {
+		if (self.type='Industrial') {
+			create home_distance with: (location:self.location);
+		}
+	}
+}
+
+action calculate_normalization {
+	list<float> pairwise_distances;
+	ask residential_cells {
+		ask industrial_cells {
+			pairwise_distances <+ distance_to(self,myself);
+		}
+	}
+	largest_possible_distance <- max(pairwise_distances);
+}
+
+action reInit {
+	residential_cells <- brix where (each.type="Residential");
+	industrial_cells  <- brix where (each.type="Industrial");
+	do calculate_normalization;
+	ask people {
+		if (not (residential_cells contains self.living_place)) {
+			self.living_place  <- one_of(residential_cells) ;
+		}
+		if (not (industrial_cells  contains self.working_place)) {
+			self.working_place <- one_of(industrial_cells) ;
+		}
+	}
+}
+```
+
+The advantage of defining `largest_possible_distance` as a global variable is that we can use it to normalize all indicators. The `commute_distance` indicator becomes:
 
 ```java
 species commute_distance parent: cityio_agent {
@@ -504,23 +564,13 @@ species commute_distance parent: cityio_agent {
 	string indicator_name <- "Commute distance";
 	
 	bool is_numeric<-true;
+	bool re_init<-true;
 	
 	float avg_distance;
 	float largest_distance;	
 	float largest_possible_distance;
-	
-	init {
-		list<float> pairwise_distances;
-		ask brix {
-			ask brix {
-				pairwise_distances <+ distance_to(self,myself);
-			}
-			
-		}
-		largest_possible_distance<-max(pairwise_distances);
-	}
-	
-	reflex update_numeric {
+		
+	action calculate_numeric {
 		list<float> brix_distances <- people collect distance_to(each.living_place,each.working_place);
 		avg_distance     <- mean(brix_distances);
 		largest_distance <- max(brix_distances);
@@ -534,7 +584,36 @@ species commute_distance parent: cityio_agent {
 
 
 
+Two examples of `heatmap` indicators:
 
+```java
+species work_distance parent: cityio_agent {
+	bool is_heatmap<-true;
+	string indicator_type<-"heatmap";
+	string indicator_name<-"Work distance";
+		
+	action calculate_heatmap {
+		float closest_workplace<- distance_to(closest_to(industrial_cells, self),self);
+		heatmap_values<-[];
+		heatmap_values<+ "closest workplace"::closest_workplace/largest_possible_distance;
+	}
+}
+```
+
+
+```java
+species home_distance parent: cityio_agent {
+	bool is_heatmap<-true;
+	string indicator_type<-"heatmap";
+	string indicator_name<-"Home distance";
+		
+	action calculate_heatmap {
+		float closest_residential<- distance_to(closest_to(residential_cells, self),self);
+		heatmap_values<-[];
+		heatmap_values<+ "closest residential"::closest_residential/largest_possible_distance;
+	}
+}
+```
 
 
 ## Step 6: Headless mode
