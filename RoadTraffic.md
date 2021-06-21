@@ -52,7 +52,7 @@ experiment CityScope type: gui autorun: false{
 }
 ```
 
-## Step 1: People Agents
+## Step 2: People Agents
 
 This second step, creates a series of `people` agents and assigns them to a random location in a `Residential` `brix` cell. This is why it was important that your table had `Residential` cells defined. 
 
@@ -461,7 +461,75 @@ experiment CityScope type: gui autorun:false{
 
 ## Step 5: Creating observers
 
-For most use cases, users will want to post summary statistics about the table or about the agents to cityIO to be displayed in the front end. These indicators can be displayed as heatmaps, as part of a bar chart or as variables in the radar plot. In order to build these `indicators`, we need to build agents that will act as `observers` by reporting information to `cityIO`. Here, we will report the total commuting distance that all agents follows from home to work and back. We will display this information as a bar in the bar chart.
+For most use cases, users will want to post summary statistics about the table or about the agents to cityIO to be displayed in the front end. These indicators can be displayed as heatmaps, as part of a bar chart, or as variables in the radar plot. In order to build these `indicators`, we need to build agents that will act as `observers` by reporting information to `cityIO`. 
+
+The simplest `indicator` is a `numeric` indicator that that collects information from the agents and reports a single number to CityIO. To create a `numeric` indicator, you can use the `cityio_numeric_indicator` species already included in `GAMABrix` and create an agent that belongs to this species. The important parameter is `indicator_value` which is a string that will be evaluated by GAMA at every step. 
+
+```java
+create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Average commute distance", indicator_value: "mean(people collect distance_to(each.living_place,each.working_place))");
+```
+
+This syntax works great for simple `numeric` indicators. In some cases, we might want to build a more complex indicator that relies on more complex calculations. For example, we might want to report both the mean and the total commute distance, or we might want to calculate commute distance over a road network and report multiple statistics to describe it. If this is the case, we need to define our own species of `numeric` indicators as a subspecies of the `cityio_agent`. The example below implements the exact same indicator as before, but defining our own species called `cityio_numeric_indicator`:
+
+```java
+species commute_distance parent: cityio_agent {
+	string viz_type <- "bar";
+	string indicator_type <- "numeric";
+	string indicator_name <- "Average commute distance";
+	
+	bool is_numeric<-true;
+	
+	float avg_distance;	
+	
+	reflex update_numeric {
+		avg_distance <- mean(people collect distance_to(each.living_place,each.working_place));
+		numeric_values<-[];
+		numeric_values<+indicator_name::avg_distance;
+	}
+}
+```
+
+To make this work, we need to add it to the init:
+
+```java
+create commute_distance;
+```
+
+Until now, all examples have returned a single value for the numeric indicator. The example below extends this by creating an indicator that reports both the average commute distance and the total commute distance. The example below also normalizes both values using a normalization factor calculated in the `init` of the species, ensuring the reported indicators are between 0 and 1. This illustrates how defining a subclass gives much more flexibility.
+
+```java
+species commute_distance parent: cityio_agent {
+	string viz_type <- "bar";
+	string indicator_type <- 'numeric';
+	string indicator_name <- "Commute distance";
+	
+	bool is_numeric<-true;
+	
+	float avg_distance;
+	float largest_distance;	
+	float largest_possible_distance;
+	
+	init {
+		list<float> pairwise_distances;
+		ask brix {
+			ask brix {
+				pairwise_distances <+ distance_to(self,myself);
+			}
+			
+		}
+		largest_possible_distance<-max(pairwise_distances);
+	}
+	
+	reflex update_numeric {
+		list<float> brix_distances <- people collect distance_to(each.living_place,each.working_place);
+		avg_distance     <- mean(brix_distances);
+		largest_distance <- max(brix_distances);
+		numeric_values<-[];
+		numeric_values<+"Average commute distance"::avg_distance/largest_possible_distance;
+		numeric_values<+"Longest commute distance"::largest_distance/largest_possible_distance;
+	}
+}
+```
 
 
 
