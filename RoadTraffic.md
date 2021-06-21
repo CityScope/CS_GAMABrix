@@ -805,9 +805,24 @@ experiment CityScope type: gui autorun:false{
 
 The final step in deploying a GAMA model to CityScope is to run it in a headless mode. This section will describe the steps needed to accomplish this. 
 
+Let's say you finished writing your model and are ready to leave it running forever (in a server where you have ssh access, for example). 
 
+We highly recommend using a docker container to run headless GAMA on a server. This will take care of compatibility issues between platforms. 
 
+First, pull the image from dockerhub. This step only needs to be performed once per server. We will be using [this image](https://hub.docker.com/r/gamaplatform/gama).
+```java
+> docker pull gamaplatform/gama
+```
 
+Second, we will build the `xml` file with the model meta parameters. You will only need to do this once for each model. Ensure you model directory (the folder that contains models, results, etc.) contains a `headless` folder. If you built your repo by forking [GAMABrix](https://github.com/CityScope/CS_GAMABrix) this folder should already be there. Then run the following command editing the name of your gama file (`model_file.gaml`) where needed:
+```java
+> docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama -xml CityScopeHeadless my_model/models/[model_file.gaml] my_model/headless/myHeadlessModel.xml
+```
 
+This creates a file called `myHeadlessModel.xml` in your `headless` folder. If you know how to edit this file, feel free to modify it now. For more information about this file, check the [documentation](https://gama-platform.github.io/wiki/Headless). Please note that by default the simulation will only run 1000 steps. If you wish to change this, edit the `xml` and change the `finalStep` property to a higher number or just delete if you wish the model to run continuosly.
 
+Finally, we will run this model inside a container. This final step is the only step you will repeat when you modify your model. Run the following command, again from your model directory:
+```java
+> docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama my_model/headless/myHeadlessModel.xml my_model/results/
+```
 
