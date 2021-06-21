@@ -489,6 +489,11 @@ species cityio_agent parent: cityio_indicator {
 	string mode<-"0";
 	
 	string type;
+	
+	init {
+		do calculate_numeric;
+		do calculate_heatmap;
+	}
 		
 	action reset_location {
 		locs<-[];
@@ -563,7 +568,7 @@ species cityio_numeric_indicator parent: cityio_agent {
 	bool is_heatmap<-false;
 	bool is_visible<-false;
 	
-	reflex update_numeric {
+	reflex calculate_numeric {
 		numeric_values<-[];
 		numeric_values<+indicator_name::float(eval_gaml(indicator_value));
 	}
