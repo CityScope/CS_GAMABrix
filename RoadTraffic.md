@@ -508,7 +508,7 @@ init {
 	
 	residential_cells <- brix where (each.type="Residential");
 	industrial_cells  <- brix where (each.type="Industrial");
-	do calculate_normalization;
+	largest_possible_distance <- calculate_normalization();
 	create people number: nb_people {
 		speed <- rnd(min_speed, max_speed);
 		start_work <- rnd (min_work_start, max_work_start);
@@ -532,7 +532,7 @@ init {
 	}
 }
 
-action calculate_normalization {
+float calculate_normalization {
 	list<float> pairwise_distances;
 	ask residential_cells {
 		ask industrial_cells {
@@ -540,12 +540,13 @@ action calculate_normalization {
 		}
 	}
 	largest_possible_distance <- max(pairwise_distances);
+	return largest_possible_distance;
 }
 
 action reInit {
 	residential_cells <- brix where (each.type="Residential");
 	industrial_cells  <- brix where (each.type="Industrial");
-	do calculate_normalization;
+	largest_possible_distance <- calculate_normalization();
 	ask people {
 		if (not (residential_cells contains self.living_place)) {
 			self.living_place  <- one_of(residential_cells) ;
@@ -570,8 +571,7 @@ species commute_distance parent: cityio_agent {
 	
 	float avg_distance;
 	float largest_distance;	
-	float largest_possible_distance;
-		
+	
 	action calculate_numeric {
 		list<float> brix_distances <- people collect distance_to(each.living_place,each.working_place);
 		avg_distance     <- mean(brix_distances);
@@ -630,13 +630,6 @@ Just as with `numeric` indicators, if we ever have a need to define a `heatmap` 
 The final example, with both `numeric` and `heatmap` indicators looks like:
 
 ```java
-/**
-* Name: examplepeople
-* Based on the internal empty template. 
-* Author: cristianjf
-* Tags: 
-*/
-
 model example
 
 import "GAMABrix.gaml"
@@ -664,7 +657,7 @@ global {
 		
 		residential_cells <- brix where (each.type="Residential");
 		industrial_cells  <- brix where (each.type="Industrial");
-		do calculate_normalization;
+		largest_possible_distance <- calculate_normalization();
 		create people number: nb_people {
 			speed <- rnd(min_speed, max_speed);
 			start_work <- rnd (min_work_start, max_work_start);
@@ -674,7 +667,7 @@ global {
 			objective <- "resting";
 			location <- any_location_in (living_place); 
 		}
-		
+
 		create commute_distance;
 		ask brix {
 			if (self.type='Residential') {
@@ -686,7 +679,7 @@ global {
 		}
 	}
 
-	action calculate_normalization {
+	float calculate_normalization {
 		list<float> pairwise_distances;
 		ask residential_cells {
 			ask industrial_cells {
@@ -694,12 +687,15 @@ global {
 			}
 		}
 		largest_possible_distance <- max(pairwise_distances);
+		return largest_possible_distance;
 	}
+	
+	
 	
 	action reInit {
 		residential_cells <- brix where (each.type="Residential");
 		industrial_cells  <- brix where (each.type="Industrial");
-		do calculate_normalization;
+		largest_possible_distance <- calculate_normalization();
 		ask people {
 			if (not (residential_cells contains self.living_place)) {
 				self.living_place  <- one_of(residential_cells) ;
@@ -754,7 +750,6 @@ species commute_distance parent: cityio_agent {
 	
 	float avg_distance;
 	float largest_distance;	
-	float largest_possible_distance;
 		
 	action calculate_numeric {
 		list<float> brix_distances <- people collect distance_to(each.living_place,each.working_place);
@@ -800,6 +795,8 @@ experiment CityScope type: gui autorun:false{
 		}
 	}
 }
+
+
 ```
 
 
