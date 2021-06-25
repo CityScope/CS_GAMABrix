@@ -1,94 +1,33 @@
-Agent-Based Model developped in the [CityScience](https://www.media.mit.edu/groups/city-science/overview/) group using [Gama Platform](https://gama-platform.github.io/) and integrated in [CityScope](https://www.media.mit.edu/projects/cityscope/overview/)
+# Getting started
 
+This tutorial will follow the famous [Road Traffic](https://gama-platform.github.io/wiki/RoadTrafficModel) model. Since we are interested in seeting up this model in a CityScope table, we will not be loading any shapefiles but will instead use `GAMABrix` to setup our world as a copy of the interactive area in a given CityScope table. If you are new to GAMA, we recommend you complete [the Road Traffic Model tutorial](https://gama-platform.github.io/wiki/RoadTrafficModel), before returning to this tutorial.
 
-# Introduction
+First, create a table [here](https://cityscope.media.mit.edu/CS_cityscopeJS/) or choose an existing table. Take note of your table name. For this tutorial, make sure that your table has the types `Residential` and `Industrial` to simulate agents commuting from work to home and viceversa.
 
-What is this library for? If you have never heard of a CityScope before, you might want to stop reading and learn about them [here](https://cityscope.media.mit.edu/). CityScope is an awesome way to interact, explore, and co-create urban interventions in a way that can be accessed by multiple people with different background. If you know what they are, please keep reading.
+## Step 1: Loading a table
 
-What is a CityScope table? a ‘table’ is our way of describing a CityScope project. Why table then? Since historically, most CityScope instances were composed of a mesh between a physical table-top 3D model of a city, augmented with projections, software, and other interface hardware. So a table => project.
+Once your table has been created, go ahead and connect your GAMA world to your table.
 
-What is an indicator? An indicator is the result of running a module for CityScope. Indicators work by listening for updated from the CityScope table they are linked to, calculating some values by using a model, some function of the data, or a simulation, and then post the result of the calculations to CityIO to be displayed in the table.
+First, clone or fork the [GAMABrix](https://github.com/CityScope/CS_GAMABrix) repo and open the `template.gaml`. We recomend starting from this model.
 
-What are the types of indicators you can build? Indicators can be anything that could be displayed on a CityScope table, including the supporting screens associated to it. For the purpose of this library, we distinguish three types of indicator: numeric, heatmap, simulation.
+The first line of the templae imports the `GAMABrix` model by adding the following import right before your `global` definition:
 
-
-* Numeric: Numeric indicators are just a number or set of numbers. They are usually displayed in a chart (bar chart, radar chart, etc) next to the table. The most common numeric indicator are the numbers that go in the radar plot, which display information about density, diversity, and proximity.
-
-
-* Heatmap: These indicators are geodata. They are made up of geometries (points, lines, or polygons) and properties associated to them. These indicators are displayed as layers directly on the CityScope table.
-
-
-* Agent: These type of indicators are also displayed on the table but they are the result of an agent based simulation and are therefore displayed as a dynamic layer. They change over time like a short movie. 
-
-
-# Setup
-
-To setup GAMABrix copy the file `GAMABrix.gaml` into your model directory and import it into your model. You can download `GAMABrix.gaml` from [here](https://github.com/CityScope/CS_Simulation_GAMA/blob/master/CS_CityScope_GAMA/models/cityIO/models/GAMABrix.gaml) Right after declaring your model, import the necessary species and functions by running:
 ```java
 import "GAMABrix.gaml"
 ```
 
-This will add to `global` the necessary functions to communicate with `CityIO` and two very important species that you will use to give your agents the properties they need to also live in CityIO: `cityio_numeric_indicator` and `cityio_agent`. Additionally, it sets up a series of `brix` agents that will ensure your world is a copy of the world in the table you have selected.
+Next, we connect our world to a table called `cityscopejs_gama` by defining the table name in the global and by using this table to define the shape of the world:
 
-
-# Tutorial 
-
-## Basics of building a CityScope indicator in GAMA
-
-Let’s get to it. First, what table are you building for? If you don’t have a specific table, that is totally okay and you can create one [here](https://cityscope.media.mit.edu/CS_cityscopeJS/). Note: by the time you read this, CityScope might pose some limitations on new projects (`tables`). Please follow instructions in the link above.
-
-For this tutorial, we crated one called `dungeonmaster`.
-
-An indicator will basically take in the properties of the `brix` agents in the world or the properties of any other simulated agent and produce a result. Each new indicator is built as an subclass of the `cityio_agent` class. `cityio_agent` is your friend, so we'll spend some time discussing it here.
-
-When you setup a model by importing `GAMABrix`, the model will run for one whole day of simulation, then posts the results of this simulation to cityio, and then stay idle waiting for an update from the table. This can be a bit annoying when you are only starting to build your model, so you can turn off this behavior and just keep the local grid update. 
-
-Think of each indicator as an observer in your model that will report information back to CityIO. When it's a numeric indicator, the agent will just report a number that it calculates based on the `brix`s, when it's a heatmap indicator, the agent will report some numbers along with its location, and when it's an agent, the agent will report it's location over time. `cityio_agent` is used as the parent class of any species that you want to visualize in CityIO. There are some specific parameters your sub-species needs to define to set the agent as a numeric, heatmap, or agent indicator.
-
-
-## GAMABrix for `cs-brix` users
-
-If you are familiar with the python library [cs-brix](https://cityscope.media.mit.edu/CS_Brix/), keep reading. Otherwise, skip to the next section of the tutorial. `brix` is relies on defining classes that contain functions that take `geogrid_data` as an input. For `GAMABrix` this is not necessary. Since `GAMA` relies on setting up a world with agents, the input data is already in the world in the form of `brix`. Therefore, when building urban indicators in `GAMA` you do not need to worry about input, and you can just get the necessary information from the `brix` agents that will be automatically created in your world. 
-
-In terms of output, `brix` relies on a series of return functions passed to a `Handler` class. In `GAMA`, the world itself acts as the `Handler` class, so there is no need to explicitly add your indicators to the `Handler` as they are already contained in the `global` species. The way to flag your indicators to be sent to `cityIO` is to define them as a subclass of `cityio_agent`. 
-
-While `brix` can handle multiple tables at the same time by creating multiple threads for each `Handler`, `GAMA` is constrained to one table per model.
-
-
-## The CityIO global
-
-To connect your world to a table you need to declare the table name inside your `global` and set the geometry of your world based on this table. For example, we named our table `dungeonmaster`:
 ```java
-string city_io_table<-"dungeonmaster";
+string city_io_table<-"cityscopejs_gama";  
 geometry shape <- envelope(setup_cityio_world());
 ```
 
-While you are building your model, we recommend turning off `GAMABrix` to speed up the process (the default). By setting `post_on<-false`, the model will only update your local grid without posting any of the indicators to cityio. In other words, you will only be *getting* from `cityIO` not *posting*. This will reduce your bandwidth usage and allow you to debug your model faster. By doing this, the model will still keep track of the day and enter idle mode once the day is over. 
+In the `global`, start by setting `bool listen <- false;` to ensure that your model is not in listen mode. We will discuss listen mode at the end of the tutorial. Set `bool post_on <- false;` as well while debugging until you are ready to start posting indicators to CityIO.
 
-For early stages of model building, you might also want to set `listen<-false`. This will tell turn off most of the functionality of the module and just make sure you are updating the local grid by pulling from your table. The simulation will not enter idle mode and the day will never reset. 
+Finally, in the `global` init we call the action `brix_init`. This action uses the information from the CityScope grid to create `brix` agents representing the cells of the interactive area of the grid. `brix` agents have a `name`, a `color`, a `height`, and more importantly a `type`, all coming from the table and its definitions. 
 
-Once you are done and want to deploy, change:
-```java
-bool post_on<-true;
-```
-
-Additionally, the following variables can be defined in the `global` and allow for a finer control of how the `global` communicates with `cityIO`. You do not need to set them up now, as the default should work fine.
-* `city_io_table`: String, name of the table to connect to.
-* `post_on`: Boolean, used to turn the posting feature on or off. Keep it off while building the model and turn it on to post to the table.
-* `update_frequency`: Intenger, frequency, in number of simulation ticks, by which to update local grid by checking for changes in gridhash. This is not the posting frequency. Optional, and defaults to `10`.
-* `send_first_batch`: Boolean, if `false` it will only send the results of the simulation once the full day has run. Optional and defaults to `true`.
-* `cycle_first_batch`: Integer, simulation tick in which to send the first batch of data to the server. Optional and defaults to `100`.
-* `step`: Float, time between two simulation ticks. Defaults to `60 #sec`.
-* `saveLocationInterval`: Float, frequency in second by which to save locally the location of agents. This is not the post frequency. Optional and defaults to `10` steps.	
-* `totalTimeInSec`: Integer, total time in seconds that the simulation will run for. Defaults to a whole day. Please note that `CityIO` will not render more than 1 day of simulation.
-* `idle_update_frequency`: Float, time in real world seconds (not simulation seconds) between two get requests to check hash when in idle mode. 
-* `listen`: Boolean, used to use GAMABrix to update the indicators in CityIO. For the early stages of model building, set `listen<-false` (the default).
-
-When you import `GAMABrix` you will also see an additional experiment called `CityScopeHeadless`. This experiment is used to run your model as a headless process in a server.
-
-By default, `GAMABrix` will run its init (which creates the grid) right after your model's init. This means that you will not have access to any `brix` object inside your init. You can always change this behavior by forcing `GAMABrix` to run its init earlyer by adding `do brix_init` where needed. 
-
-Here's an example of bare minimum model that will allow you to clone the table locally and start defining your agents:
+The following example sets up the CitySope world and displays all agents of the `brix` species with their `base` aspect.
 
 ```java
 model example
@@ -102,7 +41,7 @@ global {
 	bool post_on <- false;
 	
 	init {
-
+		do brix_init;
 	}
 }
 
@@ -115,61 +54,757 @@ experiment CityScope type: gui autorun: false{
 }
 ```
 
-## Let's talk input
+## Step 2: People Agents
 
-`GAMA` will keep a copy of the `cityIO` grid locally by creating the necessary `brix` agents. This makes all the grid information accessible to all the agents by interacting with the `brix` agents. 
+This second step, creates a series of `people` agents and assigns them to a random location in a `Residential` `brix` cell. This is why it was important that your table had `Residential` cells defined. 
 
-The main properties that `brix` agents have are:
-* type: String that identifies the type of the block. This is editable (e.g. `Residential`).
-* height: Float, height of the block.
-* color: RGB object.
-* block_lbcs: `map<string, float>` Map that connects strings (LBCS codes) and float (proportion of the block in each code).
-* block_naics: `map<string, float>` Map that connects strings (NAICS codes) and float (proportion of the block in each code).
-
-Note that `block_lbcs` and `block_naics` are the same for each `type` and are defined when you create the table. 
-
-## Building an indicator (output)
-
-
-Now, we'll turn some agents into observers that will report information to `cityIO`. All three different types of indicators report different types of information, and an agent can be reporting any type of information to `cityIO`.
-
-* Numeric: Reports numbers (e.g. average commuting time, total energy consumption, etc.). Turn this on by setting `is_numeric<-true`.
-* Heatmap: Reports numbers with location (e.g. traffic in a particular intersection, total sunlight in a specific location). Turn this on by setting `is_heatmap<-true`.
-* Agent: Report all their locations during one whole day of simulation. Turn this on by setting `is_visible<-true`. Note that the variable `is_visible` refers only to wether you'll see the agent in your CityScope table. You still need to `display` them in your local GAMA interfase if you want to see them. 
-
-When creating a numeric indicator you need to write a `reflex` for your agent that updates either `numeric_values` or `heatmap_values`. These two variables should be `map<string,float>`. Here is a simple example that `numeric_values` with the number of blocks.
+First, we define `people` species and give them an aspect to be visualized. Since the default visualization of CityScope is three dimensional, we set the aspect of `people` as spheres.
 
 ```java
-reflex update_numeric {
-	numeric_values<-[];
-	numeric_values<+"Number of blocks"::length(brix);
+species people {
+	rgb color <- #green ;
+
+	aspect base {
+		draw sphere(10) color: color border: color;
+	}
 }
 ```
 
-Similarly, here is another example that updates `heatmap_values` with two layers, `heat` and `map` defined as random numbers:
+Next, we define in our `global` the number of people `nb_people` as an integer, and create that many people agents and locate them in a residential cell. The global `init` then becomes:
+
 ```java
-reflex update_heatmap {
-	heatmap_values<-[];
-	heatmap_values<+ "heat"::rnd(10);
-	heatmap_values<+ "map"::rnd(10);
+init {
+	list<brix> residential_cells <- brix where (each.type="Residential");
+	create people number: nb_people {
+		location <- any_location_in (one_of (residential_cells));
+	}
 }
 ```
 
-For an agent indicator there is no value to be updated, as the indicator just reports its location. However, if your agent does not move, you will get a very boring dot so you might want to update the location. Here is a simple `reflex` that updates the location:
+Finally, we add `people` to the expriment output using their `base` aspect we have defined. We also add a bit of transparency to the `brix` agents so that we can still see the `people` even if the buildings become very tall. The experiment `output` becomes:
+
 ```java
-reflex move{
-	do wander;
+output {
+	display map_mode type:opengl background:#black{
+		species brix aspect: base transparency: 0.5;
+		species people aspect: base;
+	}
 }
 ```
 
-Additionally, `GAMABrix` provides a shortcut to create numeric indicators that do not require you to define a subspecies. This is meant for straightforward indicators that can be calculated in one line of code. To create a simple numeric indicator, just create and agent of the `cityio_numeric_indicator` species and pass your function as a string to `indicator_value`. For example, a numeric indicator that returns the average height of blocks:
+Putting it all together:
+
 ```java
-create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
+model example
+
+import "GAMABrix.gaml"
+
+global {
+	string city_io_table<-"cityscopejs_gama";  
+	geometry shape <- envelope(setup_cityio_world());
+	bool listen  <- false;
+	bool post_on <- false;
+	
+	int nb_people <- 100;
+	
+	init {
+		do brix_init;
+		list<brix> residential_cells <- brix where (each.type="Residential");
+		create people number: nb_people {
+			location <- any_location_in (one_of (residential_cells));
+		}
+	}
+}
+
+species people {
+	rgb color <- #green ;
+
+	aspect base {
+		draw sphere(10) color: color border: color;
+	}
+}
+
+experiment CityScope type: gui autorun:false{
+	output {
+		display map_mode type:opengl background:#black{
+			species brix aspect: base transparency: 0.5;
+			species people aspect: base;
+		}
+	}
+}
 ```
 
-## Deploy your indicator 
+## Step 3: Movement of people
 
-Let's say you finished writing your model and are ready to leave it running forever (in a server with ssh access, for example). 
+The third step is to let the people move. Ideally, you would complement the table data with a shapefile with the road network. For now, we will assume that `people` agents can move freely on the grid. 
+
+First, we import the `moving` skill for people agents in order to use the `goto` action. If you want to learn more about skills, follow the original tutorial [here](https://gama-platform.github.io/wiki/RoadTrafficModel_step3).
+
+```java
+species people skills: [moving] {
+    ...
+}
+```
+
+Then, we add new attributes to the people agents: `living_place`, `working_place`, `start_work`, `end_work` and `objective`. These attributes will help us simulate a typical day of commuting. In addition, we will create a `the_target` variable that will represent the point toward which the agent is currently moving.
+
+We also create two reflexes, `time_to_go_home` and `time_to_work` that update the `objective` of each agent and its `the_target`. Finally, we define a reflex that allows the agent to `move`, that will only get triggered when `the_target != nil`. Here is where we use the `goto` action part of the `moving` skill. The key part of this action is:
+
+```java
+do goto target: the_target;
+```
+
+If we had a road network, we would load the road network into a variable called `the_graph` and ask agents to move through the road network by doing:
+
+```java
+do goto target: the_target on: the_graph;
+```
+
+The final definition of the `people` species is:
+
+
+```java
+species people skills:[moving] {
+	rgb color <- #green ;
+	brix living_place <- nil ;
+	brix working_place <- nil ;
+	int start_work ;
+	int end_work  ;
+	string objective ; 
+	point the_target <- nil ;
+
+	reflex time_to_work when: current_date.hour = start_work and objective = "resting"{
+		objective <- "working" ;
+		the_target <- any_location_in (working_place);
+	}
+
+	reflex time_to_go_home when: current_date.hour = end_work and objective = "working"{
+		objective <- "resting" ;
+		the_target <- any_location_in (living_place); 
+	} 
+
+	reflex move when: the_target != nil {
+		do goto target: the_target; 
+		if the_target = location {
+			the_target <- nil ;
+		}
+	}
+
+	aspect base {
+		draw sphere(10) color: color border: color;
+	}
+}
+```
+
+After we have modified our `people` agents, we modify the `global` to add several parameters of the simulation: `min_work_start`, `max_work_start`, `min_work_end`, `max_work_end`, `min_speed` and `max_speed`. If we are using a road network, we also define `the_graph` here. In addition, we set the starting date and time to midnight.
+
+```java
+global {
+	...
+	date starting_date <- date("2019-09-01-00-00-00");
+	int min_work_start <- 6;
+	int max_work_start <- 8;
+	int min_work_end <- 16; 
+	int max_work_end <- 20; 
+	float min_speed <- 1.0 #km / #h;
+	float max_speed <- 5.0 #km / #h; 
+	...
+}
+```
+
+If we were using a shapefile with roads for the area where the table is located, we would create `the_graph` in the global init. For more information on this, follow the original tutorial [here](https://gama-platform.github.io/wiki/RoadTrafficModel_step3).
+
+Finally, we setup the `init` in `global`. As before, the `init` starts by calling `brix_init` and then selects all `Residential` and `Industrial` cells to assign the work and home location of each person. 
+
+```java
+init {
+	do brix_init;
+	list<brix> residential_cells <- brix where (each.type="Residential");
+	list<brix> industrial_cells  <- brix where (each.type="Industrial");
+	create people number: nb_people {
+		speed <- rnd(min_speed, max_speed);
+		start_work <- rnd (min_work_start, max_work_start);
+		end_work <- rnd(min_work_end, max_work_end);
+		living_place  <- one_of(residential_cells) ;
+		working_place <- one_of(industrial_cells) ;
+		objective <- "resting";
+		location <- any_location_in (living_place); 
+	}
+}
+```
+
+There is one issue with this init. When a cell is changed in the front end, the type of each `brix` agent might change. A residential cell might become a park, and the agent that was living there might have to relocate. We must define an additional `action` as part of the global called `reInit`. `GAMABrix` will run this action right after every grid update. In this case, our `reInit` action will start by selecting all `Residential` and `Industrial` cells and checking for every person if their home and workplace still is part of the set of `Residential` and `Industrial` cells. If not, it will reassign them to another place. 
+
+```java
+action reInit {
+	list<brix> residential_cells <- brix where (each.type="Residential");
+	list<brix> industrial_cells  <- brix where (each.type="Industrial");
+	ask people {
+		if (not (residential_cells contains self.living_place)) {
+			self.living_place  <- one_of(residential_cells) ;
+		}
+		if (not (industrial_cells  contains self.working_place)) {
+			self.working_place <- one_of(industrial_cells) ;
+		}
+	}
+}
+```
+
+In this simple model, if new housing is added, people will not always flock there. They will only change their place of work and home when they disappear.
+
+The full model looks as follows:
+
+```java
+model example
+
+import "GAMABrix.gaml"
+
+global {
+	string city_io_table<-"cityscopejs_gama";  
+	geometry shape <- envelope(setup_cityio_world());
+	bool listen  <- false;
+	bool post_on <- false;
+	
+	int nb_people <- 100;
+	date starting_date <- date("2019-09-01-00-00-00");
+	int min_work_start <- 6;
+	int max_work_start <- 8;
+	int min_work_end <- 16; 
+	int max_work_end <- 20; 
+	float min_speed <- 1.0 #km / #h;
+	float max_speed <- 5.0 #km / #h; 
+	
+	init {
+		do brix_init;
+		
+		list<brix> residential_cells <- brix where (each.type="Residential");
+		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		create people number: nb_people {
+			speed <- rnd(min_speed, max_speed);
+			start_work <- rnd (min_work_start, max_work_start);
+			end_work <- rnd(min_work_end, max_work_end);
+			living_place  <- one_of(residential_cells) ;
+			working_place <- one_of(industrial_cells) ;
+			objective <- "resting";
+			location <- any_location_in (living_place); 
+		}
+	}
+	
+	action reInit {
+		list<brix> residential_cells <- brix where  (each.type="Residential");
+		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		ask people {
+			if (not (residential_cells contains self.living_place)) {
+				self.living_place  <- one_of(residential_cells) ;
+			}
+			if (not (industrial_cells  contains self.working_place)) {
+				self.working_place <- one_of(industrial_cells) ;
+			}
+		}
+	}
+}
+
+species people skills:[moving] {
+	rgb color <- #green ;
+	brix living_place <- nil ;
+	brix working_place <- nil ;
+	int start_work ;
+	int end_work  ;
+	string objective ; 
+	point the_target <- nil ;
+
+	reflex time_to_work when: current_date.hour = start_work and objective = "resting"{
+		objective <- "working" ;
+		the_target <- any_location_in (working_place);
+	}
+	
+	reflex time_to_go_home when: current_date.hour = end_work and objective = "working"{
+		objective <- "resting" ;
+		the_target <- any_location_in (living_place); 
+	} 
+	 
+	reflex move when: the_target != nil {
+		do goto target: the_target; 
+		if the_target = location {
+			the_target <- nil ;
+		}
+	}
+
+	aspect base {
+		draw sphere(10) color: color border: color;
+	}
+}
+
+experiment CityScope type: gui autorun:false{
+	parameter "Number of people agents" var: nb_people category: "People" ;
+
+	output {
+		display map_mode type:opengl background:#black{
+			species brix aspect: base transparency: 0.5;
+			species people aspect: base;	
+		}
+	}
+}
+
+```
+
+## Step 4: Sending data to CityIO
+
+In this section we will deviate from the original Road Traffic model, which goes much deeper into simulating road congestion. We will illustrate how to send the information from the agents to CityIO.
+
+The first step, is to set `listen <- true;`. Listen mode is a bit different from the simulation you've been working with so far. When in listen mode, the simulation will run for one full day and post all that information to CityIO. The model will then remain idle until a grid update happens. Think about listen mode as recording a movie and sending it to someone else.
+
+Which agents to record? To flag the agents that will be recorded, we modify the `species` definition to make it a `subspecies` of the `cityio_agent` species. By doing this, `GAMABrix` will interpret that these agents need to be tracked because they contain important information that needs to be posted to the table. To post their location, set `bool is_visible<-true;`:
+
+```java
+species people parent: cityio_agent skills:[moving] {
+	bool is_visible<-true;
+	...
+}
+```
+
+With these simple modifications, the final model becomes:
+
+```java
+model example
+
+import "GAMABrix.gaml"
+
+global {
+	string city_io_table<-"cityscopejs_gama";  
+	geometry shape <- envelope(setup_cityio_world());
+	bool listen  <- true;
+	bool post_on <- true;
+	
+	int nb_people <- 100;
+	date starting_date <- date("2019-09-01-00-00-00");
+	int min_work_start <- 6;
+	int max_work_start <- 8;
+	int min_work_end <- 16; 
+	int max_work_end <- 20; 
+	float min_speed <- 1.0 #km / #h;
+	float max_speed <- 5.0 #km / #h; 
+	
+	init {
+		do brix_init;
+		
+		list<brix> residential_cells <- brix where (each.type="Residential");
+		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		create people number: nb_people {
+			speed <- rnd(min_speed, max_speed);
+			start_work <- rnd (min_work_start, max_work_start);
+			end_work <- rnd(min_work_end, max_work_end);
+			living_place  <- one_of(residential_cells) ;
+			working_place <- one_of(industrial_cells) ;
+			objective <- "resting";
+			location <- any_location_in (living_place); 
+		}
+	}
+
+	
+	action reInit {
+		list<brix> residential_cells <- brix where  (each.type="Residential");
+		list<brix> industrial_cells  <- brix where (each.type="Industrial");
+		ask people {
+			if (not (residential_cells contains self.living_place)) {
+				self.living_place  <- one_of(residential_cells) ;
+			}
+			if (not (industrial_cells  contains self.working_place)) {
+				self.working_place <- one_of(industrial_cells) ;
+			}
+		}
+	}
+}
+
+species people parent: cityio_agent skills:[moving] {
+	rgb color <- #green ;
+	brix living_place <- nil ;
+	brix working_place <- nil ;
+	int start_work ;
+	int end_work  ;
+	string objective ; 
+	point the_target <- nil ;
+	
+	bool is_visible<-true;
+	
+	reflex time_to_work when: current_date.hour = start_work and objective = "resting"{
+		objective <- "working" ;
+		the_target <- any_location_in (working_place);
+	}
+	
+	reflex time_to_go_home when: current_date.hour = end_work and objective = "working"{
+		objective <- "resting" ;
+		the_target <- any_location_in (living_place); 
+	} 
+	 
+	reflex move when: the_target != nil {
+		do goto target: the_target; 
+		if the_target = location {
+			the_target <- nil ;
+		}
+	}
+	
+	aspect base {
+		draw sphere(10) color: color border: color;
+	}
+}
+
+experiment CityScope type: gui autorun:false{
+	parameter "Number of people agents" var: nb_people category: "People" ;
+
+	output {
+		display map_mode type:opengl background:#black{
+			species brix aspect: base transparency: 0.5;
+			species people aspect: base;	
+		}
+	}
+}
+```
+
+## Step 5: Creating observers
+
+For most use cases, users will want to post summary statistics about the table or about the agents to cityIO to be displayed in the front end. These indicators can be displayed as heatmaps, as part of a bar chart, or as variables in the radar plot. In order to build these `indicators`, we need to build agents that will act as `observers` by reporting information to `cityIO`. 
+
+The simplest `indicator` is a `numeric` indicator that that collects information from the agents and reports a single number to CityIO. To create a `numeric` indicator, you can use the `cityio_numeric_indicator` species already included in `GAMABrix` and create an agent that belongs to this species. The important parameter is `indicator_value` which is a string that will be evaluated by GAMA at initialization. When in `listen` mode, this function will be evaluted everytime there is a table change. 
+
+```java
+create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Average commute distance", indicator_value: "mean(people collect distance_to(each.living_place,each.working_place))");
+```
+
+This syntax works great for simple `numeric` indicators, but it is a bit restrictive. In some cases, we might want to build a more complex indicator that relies on more complex calculations. For example, we might want to report multiple statistics, or we might want to calculate commute distance over a road network, or we might have a need for an indicator that updates its value via a `reflex` instead of calculating everything at `init`. If this is the case, we need to define our own species of `numeric` indicators as a subspecies of the `cityio_agent`. The example below implements the exact same indicator as before, but defining our own species called `cityio_numeric_indicator`:
+
+```java
+species commute_distance parent: cityio_agent {
+	string viz_type <- "bar";
+	string indicator_type <- "numeric";
+	string indicator_name <- "Average commute distance";
+	
+	bool is_numeric<-true;
+	float avg_distance;	
+	
+	action calculate_numeric {
+		avg_distance <- mean(people collect distance_to(each.living_place,each.working_place));
+		numeric_values<-[];
+		numeric_values<+indicator_name::avg_distance;
+	}
+}
+```
+
+The key is to update the `numeric_values` variable. This variable is a map between strings and floats, where the strings are the names of the indicator and the floats its values. Here, we do it through `calculate_numeric` action. By naming our main action this way, we tell `GAMABrix` that this needs to run every time the table changes. We could define any reflex or set of actions we wanted, as long as they update the `numeric_values` variable.  
+
+To make this work, we need to create this agent in the global `init`:
+
+```java
+create commute_distance;
+```
+
+Until now, all examples have returned a single value for the numeric indicator. The example below extends this by creating an indicator that reports both the average commute distance and the total commute distance. The example below also normalizes both values using a normalization factor calculated in the `global` `init` of the species, ensuring the reported indicators are between 0 and 1. This illustrates how defining a subclass gives much more flexibility.
+
+In the global `init`:
+
+```java
+init {
+	do brix_init;
+	
+	residential_cells <- brix where (each.type="Residential");
+	industrial_cells  <- brix where (each.type="Industrial");
+	largest_possible_distance <- calculate_normalization();
+	create people number: nb_people {
+		speed <- rnd(min_speed, max_speed);
+		start_work <- rnd (min_work_start, max_work_start);
+		end_work <- rnd(min_work_end, max_work_end);
+		living_place  <- one_of(residential_cells) ;
+		working_place <- one_of(industrial_cells) ;
+		objective <- "resting";
+		location <- any_location_in (living_place); 
+	}
+	
+	create commute_distance;
+	ask brix {
+		if (self.type='Residential') {
+			create work_distance with: (location:self.location);
+		}
+	}
+	ask brix {
+		if (self.type='Industrial') {
+			create home_distance with: (location:self.location);
+		}
+	}
+}
+
+float calculate_normalization {
+	list<float> pairwise_distances;
+	ask residential_cells {
+		ask industrial_cells {
+			pairwise_distances <+ distance_to(self,myself);
+		}
+	}
+	largest_possible_distance <- max(pairwise_distances);
+	return largest_possible_distance;
+}
+
+action reInit {
+	residential_cells <- brix where (each.type="Residential");
+	industrial_cells  <- brix where (each.type="Industrial");
+	largest_possible_distance <- calculate_normalization();
+	ask people {
+		if (not (residential_cells contains self.living_place)) {
+			self.living_place  <- one_of(residential_cells) ;
+		}
+		if (not (industrial_cells  contains self.working_place)) {
+			self.working_place <- one_of(industrial_cells) ;
+		}
+	}
+}
+```
+
+The advantage of defining `largest_possible_distance` as a global variable is that we can use it to normalize all indicators. The `commute_distance` indicator becomes:
+
+```java
+species commute_distance parent: cityio_agent {
+	string viz_type <- "bar";
+	string indicator_type <- 'numeric';
+	string indicator_name <- "Commute distance";
+	
+	bool is_numeric<-true;
+	bool re_init<-true;
+	
+	float avg_distance;
+	float largest_distance;	
+	
+	action calculate_numeric {
+		list<float> brix_distances <- people collect distance_to(each.living_place,each.working_place);
+		avg_distance     <- mean(brix_distances);
+		largest_distance <- max(brix_distances);
+		numeric_values<-[];
+		numeric_values<+"Average commute distance"::avg_distance/largest_possible_distance;
+		numeric_values<+"Longest commute distance"::largest_distance/largest_possible_distance;
+	}
+}
+```
+
+Finally, we will add two `heatmap` indicators. Heatmap indicators follow a similar logic as numeric indicators, with the difference that agents that report heatmap information need to be placed on the grid (they need to have a location). These agents then report information back to CityIO, and because these agents have a location in the grid, the information they report is spatial. For example, to construct an agent that reports its distance to the closest industrial cell we define the `calculate_heatmap` action that updates `heatmap_values` (as opposed to `numeric_values`):
+
+```java
+species work_distance parent: cityio_agent {
+	bool is_heatmap<-true;
+	string indicator_type<-"heatmap";
+	string indicator_name<-"Work distance";
+		
+	action calculate_heatmap {
+		float closest_workplace<- distance_to(closest_to(industrial_cells, self),self);
+		heatmap_values<-[];
+		heatmap_values<+ "closest workplace"::closest_workplace/largest_possible_distance;
+	}
+}
+```
+
+Where do we place these agents? In theory, they can be placed anywhere in the grid. But if we are interested in showing the distance to the closest workplace of every residential cell, we will place these agents in the center of residential cells. In the `global` `init` we create these agents as:
+
+```java
+ask brix {
+	if (self.type='Residential') {
+		create work_distance with: (location:self.location);
+	}
+}
+```
+
+In a similar way, we might be interested in the location of housing relative to workplaces. We create another species that will report this information, and place agents of this species in the center of Industrial cells. These two species of heatmap agents will be translated into two heatmap layers when visualized in the front end.
+
+```java
+species home_distance parent: cityio_agent {
+	bool is_heatmap<-true;
+	string indicator_type<-"heatmap";
+	string indicator_name<-"Home distance";
+		
+	action calculate_heatmap {
+		float closest_residential<- distance_to(closest_to(residential_cells, self),self);
+		heatmap_values<-[];
+		heatmap_values<+ "closest residential"::closest_residential/largest_possible_distance;
+	}
+}
+```
+
+Just as with `numeric` indicators, if we ever have a need to define a `heatmap` indicator that updated every time step (counting traffic, for example), we can define a `reflex` that updates `heatmap_values`. `heatmap_values` is a map between strings and floats with each string being the name of the layer to be displayed. In this example, we have separated the distance to work and distance to home layers, but you can think about one species of agents reporting multiple values to CityIO. 
+
+The final example, with both `numeric` and `heatmap` indicators looks like:
+
+```java
+model example
+
+import "GAMABrix.gaml"
+
+global {
+	string city_io_table<-"cityscopejs_gama";  
+	geometry shape <- envelope(setup_cityio_world());
+	bool listen  <- true;
+	bool post_on <- true;
+		
+	int nb_people <- 100;
+	list<brix> residential_cells;
+	list<brix> industrial_cells;
+	date starting_date <- date("2019-09-01-00-00-00");
+	int min_work_start <- 6;
+	int max_work_start <- 8;
+	int min_work_end <- 16; 
+	int max_work_end <- 20; 
+	float min_speed <- 1.0 #km / #h;
+	float max_speed <- 5.0 #km / #h; 
+	float largest_possible_distance;
+	
+	init {
+		do brix_init;
+		
+		residential_cells <- brix where (each.type="Residential");
+		industrial_cells  <- brix where (each.type="Industrial");
+		largest_possible_distance <- calculate_normalization();
+		create people number: nb_people {
+			speed <- rnd(min_speed, max_speed);
+			start_work <- rnd (min_work_start, max_work_start);
+			end_work <- rnd(min_work_end, max_work_end);
+			living_place  <- one_of(residential_cells) ;
+			working_place <- one_of(industrial_cells) ;
+			objective <- "resting";
+			location <- any_location_in (living_place); 
+		}
+
+		create commute_distance;
+		ask brix {
+			if (self.type='Residential') {
+				create work_distance with: (location:self.location);
+			}
+			if (self.type='Industrial') {
+				create home_distance with: (location:self.location);
+			}
+		}
+	}
+
+	float calculate_normalization {
+		list<float> pairwise_distances;
+		ask residential_cells {
+			ask industrial_cells {
+				pairwise_distances <+ distance_to(self,myself);
+			}
+		}
+		largest_possible_distance <- max(pairwise_distances);
+		return largest_possible_distance;
+	}
+	
+	
+	
+	action reInit {
+		residential_cells <- brix where (each.type="Residential");
+		industrial_cells  <- brix where (each.type="Industrial");
+		largest_possible_distance <- calculate_normalization();
+		ask people {
+			if (not (residential_cells contains self.living_place)) {
+				self.living_place  <- one_of(residential_cells) ;
+			}
+			if (not (industrial_cells  contains self.working_place)) {
+				self.working_place <- one_of(industrial_cells) ;
+			}
+		}
+	}
+}
+
+species people parent: cityio_agent skills:[moving] {
+	rgb color <- #green ;
+	brix living_place <- nil ;
+	brix working_place <- nil ;
+	int start_work ;
+	int end_work  ;
+	string objective ; 
+	point the_target <- nil ;
+	
+	bool is_visible<-true;
+	
+	reflex time_to_work when: current_date.hour = start_work and objective = "resting"{
+		objective <- "working" ;
+		the_target <- any_location_in (working_place);
+	}
+	
+	reflex time_to_go_home when: current_date.hour = end_work and objective = "working"{
+		objective <- "resting" ;
+		the_target <- any_location_in (living_place); 
+	} 
+	 
+	reflex move when: the_target != nil {
+		do goto target: the_target; 
+		if the_target = location {
+			the_target <- nil ;
+		}
+	}
+	
+	aspect base {
+		draw sphere(10) color: color border: color;
+	}
+}
+
+species commute_distance parent: cityio_agent {
+	string viz_type <- "bar";
+	string indicator_type <- 'numeric';
+	string indicator_name <- "Commute distance";
+	
+	bool is_numeric<-true;
+	bool re_init<-true;
+	
+	float avg_distance;
+	float largest_distance;	
+		
+	action calculate_numeric {
+		list<float> brix_distances <- people collect distance_to(each.living_place,each.working_place);
+		avg_distance     <- mean(brix_distances);
+		largest_distance <- max(brix_distances);
+		numeric_values<-[];
+		numeric_values<+"Average commute distance"::avg_distance/largest_possible_distance;
+		numeric_values<+"Longest commute distance"::largest_distance/largest_possible_distance;
+	}
+}
+
+species work_distance parent: cityio_agent {
+	bool is_heatmap<-true;
+	string indicator_type<-"heatmap";
+	string indicator_name<-"Work distance";
+		
+	action calculate_heatmap {
+		float closest_workplace<- distance_to(closest_to(industrial_cells, self),self);
+		heatmap_values<-[];
+		heatmap_values<+ "closest workplace"::closest_workplace/largest_possible_distance;
+	}
+}
+
+species home_distance parent: cityio_agent {
+	bool is_heatmap<-true;
+	string indicator_type<-"heatmap";
+	string indicator_name<-"Home distance";
+		
+	action calculate_heatmap {
+		float closest_residential<- distance_to(closest_to(residential_cells, self),self);
+		heatmap_values<-[];
+		heatmap_values<+ "closest residential"::closest_residential/largest_possible_distance;
+	}
+}
+
+experiment CityScope type: gui autorun:false{
+	parameter "Number of people agents" var: nb_people category: "People" ;
+
+	output {
+		display map_mode type:opengl background:#black{
+			species brix aspect: base transparency: 0.5;
+			species people aspect: base;	
+		}
+	}
+}
+
+
+```
+
+
+## Step 6: Headless mode
+
+The final step in deploying a GAMA model to CityScope is to run it in a headless mode. This section will describe the steps needed to accomplish this. 
+
+Let's say you finished writing your model and are ready to leave it running forever (in a server where you have ssh access, for example). 
 
 We highly recommend using a docker container to run headless GAMA on a server. This will take care of compatibility issues between platforms. 
 
@@ -178,185 +813,15 @@ First, pull the image from dockerhub. This step only needs to be performed once 
 > docker pull gamaplatform/gama
 ```
 
-Second, we will build the `xml` file with the model meta parameters. You will only need to do this once for each model. Ensure you model directory (the folder that contains models, results, etc) contains a `headless` folder, and then run the following command adding the name of your gama file (`model_file.gaml`) where needed:
+Second, we will build the `xml` file with the model meta parameters. You will only need to do this once for each model. Ensure you model directory (the folder that contains models, results, etc.) contains a `headless` folder. If you built your repo by forking [GAMABrix](https://github.com/CityScope/CS_GAMABrix) this folder should already be there. Then run the following command editing the name of your gama file (`model_file.gaml`) where needed:
 ```java
 > docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama -xml CityScopeHeadless my_model/models/[model_file.gaml] my_model/headless/myHeadlessModel.xml
 ```
 
 This creates a file called `myHeadlessModel.xml` in your `headless` folder. If you know how to edit this file, feel free to modify it now. For more information about this file, check the [documentation](https://gama-platform.github.io/wiki/Headless). Please note that by default the simulation will only run 1000 steps. If you wish to change this, edit the `xml` and change the `finalStep` property to a higher number or just delete if you wish the model to run continuosly.
 
-Finally, we will run this model inside a container. This final step is what you will repeat everytime you modify your model. Run the following command, again from your model director:
+Finally, we will run this model inside a container. This final step is the only step you will repeat when you modify your model. Run the following command, again from your model directory:
 ```java
 > docker run --rm -v "$(pwd)":/usr/lib/gama/headless/my_model gamaplatform/gama my_model/headless/myHeadlessModel.xml my_model/results/
 ```
 
-# Examples
-
-## Basic numeric indicator
-
-To create a numeric indicator, the recommended way is to define a species of agents that will act as *observers* that will report the information to `cityIO`. This species needs to have `cityio_agent` as parent species.
-
-You need to define four things:
-* Set `is_numeric` to `true`.
-* Define a reflex that updates the `numeric_values` map (`map<string,float>`).
-* Define an `indicator_name` either in the species definition or in the create statement.
-* Set the `viz_type` to either `bar` or `radar` (defaults to `bar` if you don't change it).
-
-Here's a simple example:
-```java
-species my_numeric_indicator parent: cityio_agent {
-	bool is_numeric<-true;
-	string viz_type <- "bar";
-	string indicator_name<-"Table Size";
-	
-	reflex update_numeric {
-		numeric_values<-[];
-		numeric_values<+indicator_name::length(brix);
-	}
-}
-```
-
-Don't forget to create an agent of this species in the `global` `init`.
-```java
-create my_numeric_indicator;
-```
-
-For simple indicators, you can rely on creating an agent of the `cityio_numeric_indicator` species in your `global` `init`. Here's an example:
-```java
-create cityio_numeric_indicator with: (viz_type:"bar", indicator_name: "Max Height",  indicator_value: "max(brix collect each.height)");
-```
-
-## Basic heatmap indicator
-
-To create a heatmap indicator, define a species of agents that will act as *observers* that will report the information to `cityIO`. These agents need to have a location assigned to them. This species needs to have `cityio_agent` as parent species.
-
-You need to define three things:
-* Set `is_heatmap` to `true`.
-* Define a reflex that updates the `heatmap_values` map (`map<string,float>`).
-* Define an `indicator_name` either in the species definition or in the create statement.
-
-```java
-species thermometer parent: cityio_agent {
-	bool is_heatmap<-true;
-	string indicator_name<-"thermometer";
-	
-	reflex update_heatmap {
-		heatmap_values<-[];
-		heatmap_values<+ "heat"::rnd(10);
-		heatmap_values<+ "map"::rnd(10);
-	}	
-}
-```
-
-## Basic agent indicator
-
-Finally, you can easily add agents to be displayed in `cityIO`. Interestingly, these are the easiest indicators to define. In fact, you can turn any species into a `cityio_agent` by defining their parent class. 
-
-You need to is_visible two things:
-* Set `is_heatmap` to `true`.
-* Define a reflex that updates the agent's location. 
-
-```java
-species people parent: cityio_agent skills:[moving]{ 
-	bool is_visible<-true;
-	
-	reflex move{
-		do wander;
-	}
-}
-```
-
-Additionally, you can define the integers `profile` and `mode` that will control the way they are displayed in the front end. You can also define reflexes that update these two properties. For example, you can differentiate between drivers and walkers, or between day workers and night workers, etc. 
-
-## Full module example (with comments)
-
-```java
-model citIOGAMA
-
-// Import GAMABrix (this needs to be in the same directory as your model)
-import "GAMABrix.gaml" 
-
-global {
-	// Define the table you'll be working with
-	string city_io_table<-"dungeonmaster";
-    geometry shape <- envelope(setup_cityio_world());
-
-    // Set post to true so that GAMABrix can post to cityIO
-	bool post_on<-true;
-	
-	init {
-		// Create people based on species defined below
-		create people number:10; 
-
-		// Create 100 points of a heatmap indicator (species defined below)
-		create thermometer number:100;
-
-		// Use cityio_numeric_indicator to define a mean block height numeric indicator
-		create cityio_numeric_indicator with: (viz_type:"bar",indicator_name: "Mean Height", indicator_value: "mean(brix collect each.height)");
-		
-		// Create a numeric indicator based on the species defined below
-		create my_numeric_indicator     with: (viz_type:"bar",indicator_name: "Number of blocks");
-	}
-	
-	
-}
-
-// Define a custom numeric indicator
-species my_numeric_indicator parent: cityio_agent {
-	// Set the indicator as numeric
-	bool is_numeric<-true;
-
-	// Visualize it as a bar chart
-	string viz_type <- "bar";
-	
-	// Define reflex that updates numeric_values
-	reflex update_numeric {
-		numeric_values<-[];
-		numeric_values<+indicator_name::length(brix);
-	}
-}
-
-// Define custom heatmap indicator
-species thermometer parent: cityio_agent {
-	// Set the indicator as heatmap
-	bool is_heatmap<-true;
-
-	// Define reflex that updates heatmap_values
-	reflex update_heatmap {
-		heatmap_values<-[];
-		heatmap_values<+ "heat"::rnd(10);
-		heatmap_values<+ "map"::rnd(10);
-	}	
-}
-
-// Define people, to be used as agent indicators
-species people parent: cityio_agent skills:[moving]{ 
-	// Set agents as visible in cityIO
-	bool is_visible<-true;
-	
-	// Update the agents location at every step
-	reflex move{
-		do wander;
-	}
-	
-	// Set base aspect to visualize in GAMA GUI
-	aspect base{
-		draw circle(10) color:#blue;
-	}
-}
-
-// Define a experiment to visualize in GUI
-experiment CityScope type: gui autorun:false{
-	output {
-		display map_mode type:opengl background:#black{	
-			species brix aspect:base;
-			species people aspect:base position:{0,0,0.1};
-		}
-	}
-}
-```
-
-
-<!-- Agents that randomly move on road network.
-1) Pull road network from OSM
-2) Place agents in network and make them move randomly. -->
