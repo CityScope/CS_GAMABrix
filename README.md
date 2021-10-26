@@ -30,7 +30,7 @@ Finally, in the `global` init we call the action `brix_init`. This action uses t
 The following example sets up the CitySope world and displays all agents of the `brix` species with their `base` aspect.
 
 ```java
-model example
+model template
 
 import "GAMABrix.gaml"
 
