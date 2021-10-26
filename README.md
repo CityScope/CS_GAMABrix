@@ -27,10 +27,10 @@ In the `global`, start by setting `bool listen <- false;` to ensure that your mo
 
 Finally, in the `global` init we call the action `brix_init`. This action uses the information from the CityScope grid to create `brix` agents representing the cells of the interactive area of the grid. `brix` agents have a `name`, a `color`, a `height`, and more importantly a `type`, all coming from the table and its definitions. 
 
-The following [example](https://github.com/CityScope/CS_GAMABrix/blob/master/models/template.gaml) sets up the CitySope world and displays all agents of the `brix` species with their `base` aspect.
+The following [example](https://github.com/CityScope/CS_GAMABrix/blob/master/models/example_step1.gaml) sets up the CitySope world and displays all agents of the `brix` species with their `base` aspect.
 
 ```java
-model template
+model example
 
 import "GAMABrix.gaml"
 
@@ -92,7 +92,7 @@ output {
 }
 ```
 
-Putting it all together:
+Putting it all together [here](https://github.com/CityScope/CS_GAMABrix/blob/master/models/example_step2.gaml):
 
 ```java
 model example
@@ -252,7 +252,7 @@ action reInit {
 
 In this simple model, if new housing is added, people will not always flock there. They will only change their place of work and home when they disappear.
 
-The full model looks as follows:
+The full model looks as follows [here](https://github.com/CityScope/CS_GAMABrix/blob/master/models/example_step3.gaml):
 
 ```java
 model example
@@ -363,7 +363,7 @@ species people parent: cityio_agent skills:[moving] {
 }
 ```
 
-With these simple modifications, the final model becomes:
+With these simple modifications, the final model becomes [here](https://github.com/CityScope/CS_GAMABrix/blob/master/models/example_step4.gaml):
 
 ```java
 model example
@@ -627,7 +627,7 @@ species home_distance parent: cityio_agent {
 
 Just as with `numeric` indicators, if we ever have a need to define a `heatmap` indicator that updated every time step (counting traffic, for example), we can define a `reflex` that updates `heatmap_values`. `heatmap_values` is a map between strings and floats with each string being the name of the layer to be displayed. In this example, we have separated the distance to work and distance to home layers, but you can think about one species of agents reporting multiple values to CityIO. 
 
-The final example, with both `numeric` and `heatmap` indicators looks like:
+The final example, with both `numeric` and `heatmap` indicators looks like [here](https://github.com/CityScope/CS_GAMABrix/blob/master/models/example_step5.gaml):
 
 ```java
 model example
