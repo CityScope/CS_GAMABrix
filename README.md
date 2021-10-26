@@ -27,7 +27,7 @@ In the `global`, start by setting `bool listen <- false;` to ensure that your mo
 
 Finally, in the `global` init we call the action `brix_init`. This action uses the information from the CityScope grid to create `brix` agents representing the cells of the interactive area of the grid. `brix` agents have a `name`, a `color`, a `height`, and more importantly a `type`, all coming from the table and its definitions. 
 
-The following example sets up the CitySope world and displays all agents of the `brix` species with their `base` aspect.
+The following [example](https://github.com/CityScope/CS_GAMABrix/blob/master/models/template.gaml) sets up the CitySope world and displays all agents of the `brix` species with their `base` aspect.
 
 ```java
 model template
