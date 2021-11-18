@@ -38,7 +38,7 @@ global {
 	int start_day_cycle<-0;
 	float end_day_time  <- start_day_time+totalTimeInSec;
 	bool first_batch_sent<-false;
-	file geogrid;
+	geojson_file geogrid;
 	string grid_hash_id;
 	string hash_id<-"GEOGRIDDATA"; // Some models might want to listen to changes in other hashes (e.g, indicators)
 	map<string,unknown> static_type;
@@ -46,7 +46,7 @@ global {
 	map<string,map<string, float>> naics_type;
 	bool brix_init_tracker<-false; // Tracks if GAMAbrix init has already been run
 	
-	bool inverse_xy <- true; //parameter for issue #157
+	bool inverse_xy <- true; //parameter for issue #https://github.com/CityScope/CS_Simulation_GAMA/issues/157
 	
 	
 	list<string> road_types <- ["Road", "LRT street"];	
@@ -110,7 +110,9 @@ global {
 	}
 	
 	action initialize_brix {
-		create brix from:geogrid with: (name:nil);
+		float coeff <- world.shape.perimeter;
+		list<geometry> orderd_geom <- inverse_xy? geogrid.contents sort_by (- each.location.x  - coeff * each.location.y) : geogrid.contents sort_by ( coeff * each.location.x + each.location.y) ;
+		create brix from:orderd_geom with: (name:nil);
 		if (inverse_xy) {
 			ask brix {
 				list<point> pts;
